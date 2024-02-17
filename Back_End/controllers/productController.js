@@ -7,38 +7,38 @@ const APIFeatures = require('../utils/apiFeatures');
 //http://localhost:8000/api/v1/products
 exports.getProducts = async (req, res, next) => {
   try {
-      const resPerPage = 2; // Consider making this configurable
-      const apifeatures = new APIFeatures(Product.find(), req.query).search().filter().paginate(resPerPage);
-      const products = await apifeatures.query.exec();
-      res.status(200).json({
-          success: true,
-          count: products.length,
-          products
-      });
+    const resPerPage = 2; // Consider making this configurable
+    const apifeatures = new APIFeatures(Product.find(), req.query).search().filter().paginate(resPerPage);
+    const products = await apifeatures.query.exec();
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products
+    });
   } catch (error) {
-      next(error); // Pass the error to the error handling middleware
+    next(error); // Pass the error to the error handling middleware
   }
 };
 
 
 //http://localhost:8000/api/v1//products/new
 
-exports.newProduct = catchAsyncError (async (req, res, next) => {
-    const productData = req.body; // Accessing the product data from the request body
-    req.body.user = req.user.id;
-   await Product.create(productData)
+exports.newProduct = catchAsyncError(async (req, res, next) => {
+  const productData = req.body; // Accessing the product data from the request body
+  req.body.user = req.user.id;
+  await Product.create(productData)
     .then(product => {
-       res.status(201).json({
-          success: true,
-          product
-       });
+      res.status(201).json({
+        success: true,
+        product
+      });
     })
     .catch(error => {
-       next(error);
+      next(error);
     });
- });
+});
 
- //Get single Product
+//Get single Product
 
 //  exports.getSingleProdect = async(req,res,next) => {
 //    const products = await product.findById(req.params.id)
@@ -58,25 +58,25 @@ exports.newProduct = catchAsyncError (async (req, res, next) => {
 
 
 exports.getSingleProdect = async (req, res, next) => {
-   try {
-     const product = await Product.findById(req.params.id);
- 
-     if (!product) {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
       return next(new ErrorHandler('Product not found', 400))
-     }
- 
-     res.status(200).json({
-       success: true,
-       product
-     });
-   } catch (error) {
-     next(error)
-   }
- };
+    }
 
- //update Product http://localhost:8000/api/v1/product/id
+    res.status(200).json({
+      success: true,
+      product
+    });
+  } catch (error) {
+    next(error)
+  }
+};
 
- exports.updateProduct = async (req, res, next) => {
+//update Product http://localhost:8000/api/v1/product/id
+
+exports.updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
     if (!product) {
@@ -109,7 +109,7 @@ exports.getSingleProdect = async (req, res, next) => {
 exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
-   
+
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -130,3 +130,84 @@ exports.deleteProduct = async (req, res, next) => {
     });
   }
 }
+
+//Create Review http://localhost:8000/api/v1/review
+// {
+//   "rating": 3.5,
+//   "comment": "Product quality is good! but packaging is bad",
+//   "productId": "65c787272c3f22ba47ed36b2"
+// }
+
+exports.createReview = catchAsyncError(async (req, res, next) => {
+  const { productId, rating, comment } = req.body;
+  
+  // Validate input data
+  if (!productId || !rating || !comment) {
+    return res.status(400).json({ success: false, error: "Missing required fields" });
+  }
+
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    return res.status(404).json({ success: false, error: "Product not found" });
+  }
+
+  const existingReview = product.reviews.find(review => review.user.toString() === req.user.id.toString());
+
+  if (existingReview) {
+    // Update existing review
+    existingReview.comment = comment;
+    existingReview.rating = rating;
+  } else {
+    // Create new review
+    product.reviews.push({ user: req.user.id, rating, comment });
+    product.numOfReviews = product.reviews.length;
+  }
+
+  // Calculate average rating
+  const totalRating = product.reviews.reduce((acc, review) => acc + review.rating, 0);
+  product.ratings = totalRating / product.reviews.length || 0;
+
+  await product.save();
+
+  res.status(200).json({ success: true });
+});
+
+//Get Reviews http://localhost:8000/api/v1/reviews?id=65c787272c3f22ba47ed36b2   (this id is product id review product id )
+exports.getReviews = catchAsyncError(async (req, res, next) => {
+  const product = await Product.findById(req.query.id)
+
+  res.status(200).json({
+    success: true,
+    reviews: product.reviews
+  })
+})
+
+//Delete Review http://localhost:8000/api/v1/review?id=65d0d5eced9d3618e9dcf7ac&productId=65c787272c3f22ba47ed36b2
+exports.deleteReview = catchAsyncError(async (req, res, next) => {
+  const product = await Product.findById(req.query.productId);
+
+  // Filter out the review with the provided id
+  const reviews = product.reviews.filter(review => {
+    return review._id.toString() !== req.query.id.toString();
+  });
+
+  // Update the number of reviews
+  const numOfReviews = reviews.length;
+
+  // Calculate the new average rating
+  const newRating = reviews.reduce((acc, review) => {
+    return review.rating + acc;
+  }, 0) / (reviews.length || 1); // Avoid dividing by zero
+
+  // Save the updated product document
+  await Product.findByIdAndUpdate(req.query.productId, {
+    reviews,
+    numOfReviews,
+    ratings: isNaN(newRating) ? 0 : newRating // Fix typo and handle NaN case
+  });
+
+  res.status(200).json({
+    success: true
+  });
+})

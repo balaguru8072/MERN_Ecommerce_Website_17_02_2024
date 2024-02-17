@@ -53,25 +53,25 @@
         "description": "Lenovo IdeaPad Slim 311th Gen Intel Core i5-1135G7 | Speed: 2.4 GHz (Base) - 4.2 GHz (Max) | 4 Cores | 8 Threads | 8 MB Cache",
         "ratings": 4,
         "images": [
-          {
-            "image": "5.jpg"
-          }
+            {
+                "image": "5.jpg"
+            }
         ],
         "category": "Laptops",
         "seller": "Ebay",
         "stock": 9,
         "numOfReviews": 12,
         "reviews": []
-      },
-      {
+    },
+    {
         "name": "ASUS VivoBook 15 Laptop",
         "price": 767.32,
         "description": "ASUS VivoBook 15 15.6-inch (39.62 cm) HD, Dual Core Intel Celeron N4020, Thin and Light Laptop (4GB RAM/256GB SSD/Integrated Graphics/Windows 11 Home/Transparent Silver/1.8 Kg), X515MA-BR011W",
         "ratings": 5,
         "images": [
-          {
-            "image": "6.jpg"
-          }
+            {
+                "image": "6.jpg"
+            }
         ],
         "category": "Laptops",
         "seller": "Ebay",
