@@ -3,11 +3,11 @@ const { getProducts, newProduct, getSingleProdect, updateProduct, deleteProduct,
 const router = express.Router();
 const {isAuthenticatedUser, authorizeRoles} = require('../middlewares/authenticate')
 
-router.route('/products').get(isAuthenticatedUser,getProducts);
+router.route('/products').get(getProducts);
 router.route('/product/:id')
-.get(getSingleProdect)
-.put(updateProduct)
-.delete(deleteProduct)
+        .get(getSingleProdect)
+        .put(updateProduct)
+        .delete(deleteProduct)
 
 router.route('/review').put(isAuthenticatedUser,createReview)
                         .delete(deleteReview)

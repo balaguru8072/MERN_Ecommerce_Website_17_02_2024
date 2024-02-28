@@ -9,7 +9,19 @@ const mongoose = require('mongoose');
 
 //http://localhost:8000/api/v1/register
 exports.registerUser = catchAsyncError(async (req, res, next) => {
-    const { name, email, password, avatar } = req.body;
+    const {name, email, password } = req.body
+
+    let avatar;
+    
+    let BASE_URL = process.env.BACKEND_URL;
+    if(process.env.NODE_ENV === "developement"){
+        BASE_URL = `${req.protocol}://${req.get('host')}`
+    }
+
+    if(req.file){
+        avatar = `${BASE_URL}/uploads/user/${req.file.originalname}`
+    }
+
     const user = await User.create({
         name,
         email,
@@ -17,9 +29,7 @@ exports.registerUser = catchAsyncError(async (req, res, next) => {
         avatar
     });
 
-    // const token = user.getJwtToken();
-
-    sendToken(user, 201 , res)
+    sendToken(user, 201, res)
 });
 
 

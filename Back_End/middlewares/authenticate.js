@@ -13,6 +13,7 @@ exports.isAuthenticatedUser = catchAsyncError(async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.BALA_SECRET);
         req.user = await User.findById(decoded.id);
+        req.user = decoded;
         if (!req.user) {
             return next(new ErrorHandler('User not found', 404));
         }
